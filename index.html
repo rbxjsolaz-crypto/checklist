@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Checklist – RBMU-1488 Rivian Upper Body</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f4f4f0;
+    min-height: 100vh;
+    padding: 1.5rem 1rem 3rem;
+    color: #1a1a1a;
+  }
+
+  .card {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e0dfd8;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+
+  .header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e0dfd8;
+  }
+  .header-tags { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+  .tag-ref   { background: #dde8fb; color: #1a4fa0; }
+  .tag-proj  { background: #efefef; color: #555; }
+  .header-title { font-size: 16px; font-weight: 600; color: #111; }
+  .header-sub   { font-size: 12px; color: #888; margin-top: 3px; }
+
+  .progress-wrap { height: 5px; background: #f0efea; }
+  .progress-fill { height: 5px; background: #1D9E75; transition: width 0.35s ease; width: 0%; }
+
+  .summary-bar {
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #e0dfd8;
+    flex-wrap: wrap;
+  }
+  .sum-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #666; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .dot-ok      { background: #1D9E75; }
+  .dot-nok     { background: #D85A30; }
+  .dot-review  { background: #BA7517; }
+  .dot-pending { background: #ccc; }
+
+  .online-bar {
+    padding: 0.4rem 1.5rem;
+    font-size: 11px;
+    color: #888;
+    border-bottom: 1px solid #f0efea;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .item {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f0efea;
+  }
+  .item:last-child { border-bottom: none; }
+
+  .item-top { display: flex; align-items: flex-start; gap: 10px; }
+  .item-badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+  }
+  .badge-drng { background: #EEEDFE; color: #3C3489; }
+  .badge-ubmn { background: #E1F5EE; color: #085041; }
+
+  .item-desc { font-size: 13px; color: #222; line-height: 1.55; flex: 1; }
+
+  .item-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+
+  select, input[type="text"] {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: #fafaf8;
+    color: #222;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  select:focus, input[type="text"]:focus { border-color: #888; }
+
+  select.ok     { border-color: #1D9E75; color: #085041; background: #E1F5EE; }
+  select.nok    { border-color: #D85A30; color: #712B13; background: #FAECE7; }
+  select.review { border-color: #BA7517; color: #633806; background: #FAEEDA; }
+
+  input[type="text"] { flex: 1; min-width: 150px; }
+  input[type="text"]::placeholder { color: #bbb; }
+
+  .footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e0dfd8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    background: #fafaf8;
+  }
+  .footer-ref { font-size: 11px; color: #aaa; }
+  .footer-ref a { color: #1a4fa0; text-decoration: none; }
+
+  .saved-indicator {
+    font-size: 11px;
+    color: #1D9E75;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .saved-indicator.show { opacity: 1; }
+
+  #name-bar {
+    padding: 0.75rem 1.5rem;
+    border-bottom: 1px solid #e0dfd8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  #name-bar label { font-size: 12px; color: #666; white-space: nowrap; }
+  #name-input { flex: 1; max-width: 240px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <div class="header">
+    <div class="header-tags">
+      <span class="tag tag-ref">RBMU-1488</span>
+      <span class="tag tag-proj">Rivian · Upper Body</span>
+    </div>
+    <div class="header-title">Ops – PE – UpperBody checklist</div>
+    <div class="header-sub">HMI vs. fixture discrepancies · <span id="progress-text">0 de 8 revisados</span></div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-fill" id="progress-bar"></div>
+  </div>
+
+  <div id="name-bar">
+    <label for="name-input">Tu nombre:</label>
+    <input type="text" id="name-input" placeholder="Escribe tu nombre..." maxlength="40" />
+  </div>
+
+  <div class="online-bar">
+    <span class="online-dot"></span>
+    <span id="online-text">Conectando...</span>
+  </div>
+
+  <div class="summary-bar">
+    <div class="sum-item"><span class="dot dot-ok"></span><span id="cnt-ok">0 OK</span></div>
+    <div class="sum-item"><span class="dot dot-nok"></span><span id="cnt-nok">0 NOK</span></div>
+    <div class="sum-item"><span class="dot dot-review"></span><span id="cnt-review">0 En revisión</span></div>
+    <div class="sum-item"><span class="dot dot-pending"></span><span id="cnt-pending">8 Pendiente</span></div>
+  </div>
+
+  <div id="items-list"></div>
+
+  <div class="footer">
+    <div class="footer-ref">
+      Ref. informativa: <a href="https://your-jira-link.com/RBMU-1488" target="_blank">[RBMU-1488] Ops – PE – UpperBody – Rivian</a>
+    </div>
+    <span class="saved-indicator" id="saved-indicator">✓ Guardado</span>
+  </div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDtSPeKqcCBxv5RReaQBgquj4O0lpiD6jM",
+    authDomain: "checklist-a6b0f.firebaseapp.com",
+    databaseURL: "https://checklist-a6b0f-default-rtdb.firebaseio.com",
+    projectId: "checklist-a6b0f",
+    storageBucket: "checklist-a6b0f.firebasestorage.app",
+    messagingSenderId: "497629979786",
+    appId: "1:497629979786:web:4dcee633eaafa063e37973",
+    measurementId: "G-V63GNHJNGX"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  const ITEMS = [
+    { station: "050",  type: "DRNG", desc: "Several sensor positions on HMI vs. fixture do not match." },
+    { station: "010",  type: "DRNG", desc: "Cylinder labels were corrected but nomenclature discrepancy still exists. In HMI magnets are named GPA, but labels use MMB → must be MMB." },
+    { station: "010",  type: "UBMN", desc: "BG1-BGB9 is not in HMI." },
+    { station: "016",  type: "UBMN", desc: "BG1-BG1 & 2 are flipped." },
+    { station: "031R", type: "UBMN", desc: "Image on HMI doesn't match loading perspective." },
+    { station: "070",  type: "UBMN", desc: "Safety sensors labeled incorrectly on HMI. BG1_BGB1 on HMI for gun is labeled BGB8 on tool (RH side in station / top on HMI)." },
+    { station: "070",  type: "UBMN", desc: "BG1_BGB2 for LH side in station and bottom on HMI." },
+    { station: "080",  type: "UBMN", desc: "MM4-MB2 & MM3-MMB2 locations are swapped on HMI." },
+  ];
+
+  // Build DOM
+  const list = document.getElementById("items-list");
+  ITEMS.forEach((item, i) => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="item-top">
+        <span class="item-badge ${item.type === 'DRNG' ? 'badge-drng' : 'badge-ubmn'}">${item.station} · ${item.type}</span>
+        <span class="item-desc">${item.desc}</span>
+      </div>
+      <div class="item-controls">
+        <select class="status-select" id="status-${i}">
+          <option value="pending">— Pendiente</option>
+          <option value="ok">✓ OK</option>
+          <option value="nok">✗ NOK</option>
+          <option value="review">↺ En revisión</option>
+        </select>
+        <input type="text" id="comment-${i}" placeholder="Comentario / responsable..." />
+      </div>
+    `;
+    list.appendChild(div);
+  });
+
+  // Name
+  const nameInput = document.getElementById("name-input");
+  const savedName = localStorage.getItem("checklist_name") || "";
+  nameInput.value = savedName;
+  nameInput.addEventListener("input", () => {
+    localStorage.setItem("checklist_name", nameInput.value);
+  });
+
+  // Saved indicator
+  let saveTimer;
+  function flashSaved() {
+    const el = document.getElementById("saved-indicator");
+    el.classList.add("show");
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => el.classList.remove("show"), 2000);
+  }
+
+  // Write to Firebase
+  function writeItem(i) {
+    const status  = document.getElementById(`status-${i}`).value;
+    const comment = document.getElementById(`comment-${i}`).value;
+    const user    = nameInput.value.trim() || "Anónimo";
+    set(ref(db, `checklist/items/${i}`), { status, comment, user, ts: Date.now() });
+    flashSaved();
+  }
+
+  // Attach listeners after DOM ready
+  ITEMS.forEach((_, i) => {
+    document.getElementById(`status-${i}`).addEventListener("change", () => writeItem(i));
+    document.getElementById(`comment-${i}`).addEventListener("change", () => writeItem(i));
+  });
+
+  // Update summary
+  function updateSummary(data) {
+    let ok=0, nok=0, review=0, pending=0;
+    ITEMS.forEach((_, i) => {
+      const s = data && data[i] ? data[i].status : "pending";
+      if      (s === "ok")     ok++;
+      else if (s === "nok")    nok++;
+      else if (s === "review") review++;
+      else                     pending++;
+    });
+    const done  = ok + nok + review;
+    const total = ITEMS.length;
+    document.getElementById("progress-bar").style.width = Math.round((done / total) * 100) + "%";
+    document.getElementById("progress-text").textContent = done + " de " + total + " revisados";
+    document.getElementById("cnt-ok").textContent      = ok      + " OK";
+    document.getElementById("cnt-nok").textContent     = nok     + " NOK";
+    document.getElementById("cnt-review").textContent  = review  + " En revisión";
+    document.getElementById("cnt-pending").textContent = pending + " Pendiente";
+  }
+
+  // Listen realtime
+  const itemsRef = ref(db, "checklist/items");
+  onValue(itemsRef, (snapshot) => {
+    document.getElementById("online-text").textContent = "Sincronizado en tiempo real";
+    const data = snapshot.val() || {};
+
+    ITEMS.forEach((_, i) => {
+      const sel  = document.getElementById(`status-${i}`);
+      const inp  = document.getElementById(`comment-${i}`);
+      if (data[i]) {
+        // Only update if element not focused (avoid overwriting while typing)
+        if (document.activeElement !== sel) {
+          sel.value = data[i].status || "pending";
+          sel.className = "status-select " + (data[i].status || "pending");
+        }
+        if (document.activeElement !== inp) {
+          inp.value = data[i].comment || "";
+        }
+      }
+    });
+
+    updateSummary(data);
+  }, (error) => {
+    document.getElementById("online-text").textContent = "Error de conexión — " + error.message;
+  });
+</script>
+</body>
+</html>
