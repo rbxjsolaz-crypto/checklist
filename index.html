@@ -71,17 +71,6 @@
   .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #1D9E75; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .section-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #aaa;
-    padding: 0.6rem 1.5rem 0.3rem;
-    background: #fafaf8;
-    border-bottom: 1px solid #f0efea;
-  }
-
   .item {
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #f0efea;
@@ -99,11 +88,8 @@
     margin-top: 2px;
     letter-spacing: 0.02em;
   }
-  .badge-drng    { background: #EEEDFE; color: #3C3489; }
-  .badge-ubmn    { background: #E1F5EE; color: #085041; }
-  .badge-bso     { background: #FAECE7; color: #712B13; }
-  .badge-frm2    { background: #dde8fb; color: #1a4fa0; }
-  .badge-bsofrm2 { background: #FAEEDA; color: #633806; }
+  .badge-drng { background: #EEEDFE; color: #3C3489; }
+  .badge-ubmn { background: #E1F5EE; color: #085041; }
 
   .item-desc { font-size: 13px; color: #222; line-height: 1.55; flex: 1; }
 
@@ -133,6 +119,50 @@
 
   input[type="text"] { flex: 1; min-width: 150px; }
   input[type="text"]::placeholder { color: #bbb; }
+
+
+  input[type="file"] {
+    font-size: 12px;
+    color: #555;
+    max-width: 220px;
+  }
+
+  .screenshot-preview {
+    display: none;
+    margin-top: 10px;
+    padding-left: 82px;
+  }
+  .screenshot-preview.has-image { display: block; }
+  .screenshot-preview img {
+    max-width: 220px;
+    max-height: 140px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    display: block;
+    margin-bottom: 6px;
+    background: #fafaf8;
+  }
+  .screenshot-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 11px;
+  }
+  .screenshot-link {
+    color: #1a4fa0;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .remove-shot {
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    color: #712B13;
+  }
 
   .footer {
     padding: 1rem 1.5rem;
@@ -176,7 +206,7 @@
       <span class="tag tag-proj">Rivian · Upper Body</span>
     </div>
     <div class="header-title">Ops – PE – UpperBody checklist</div>
-    <div class="header-sub">HMI vs. fixture discrepancies · <span id="progress-text">0 de 11 revisados</span></div>
+    <div class="header-sub">HMI vs. fixture discrepancies · <span id="progress-text">0 de 8 revisados</span></div>
   </div>
 
   <div class="progress-wrap">
@@ -197,7 +227,7 @@
     <div class="sum-item"><span class="dot dot-ok"></span><span id="cnt-ok">0 OK</span></div>
     <div class="sum-item"><span class="dot dot-nok"></span><span id="cnt-nok">0 NOK</span></div>
     <div class="sum-item"><span class="dot dot-review"></span><span id="cnt-review">0 En revisión</span></div>
-    <div class="sum-item"><span class="dot dot-pending"></span><span id="cnt-pending">11 Pendiente</span></div>
+    <div class="sum-item"><span class="dot dot-pending"></span><span id="cnt-pending">8 Pendiente</span></div>
   </div>
 
   <div id="items-list"></div>
@@ -213,7 +243,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDtSPeKqcCBxv5RReaQBgquj4O0lpiD6jM",
@@ -229,72 +259,57 @@
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
 
-  const SECTIONS = [
-    {
-      label: "HMI vs. Fixture discrepancies",
-      items: [
-        { station: "050",  type: "DRNG", badge: "badge-drng", desc: "Several sensor positions on HMI vs. fixture do not match." },
-        { station: "010",  type: "DRNG", badge: "badge-drng", desc: "Cylinder labels were corrected but nomenclature discrepancy still exists. In HMI magnets are named GPA, but labels use MMB → must be MMB." },
-        { station: "010",  type: "UBMN", badge: "badge-ubmn", desc: "BG1-BGB9 is not in HMI." },
-        { station: "016",  type: "UBMN", badge: "badge-ubmn", desc: "BG1-BG1 & 2 are flipped." },
-        { station: "031R", type: "UBMN", badge: "badge-ubmn", desc: "Image on HMI doesn't match loading perspective." },
-        { station: "070",  type: "UBMN", badge: "badge-ubmn", desc: "Safety sensors labeled incorrectly on HMI. BG1_BGB1 on HMI for gun is labeled BGB8 on tool (RH side in station / top on HMI)." },
-        { station: "070",  type: "UBMN", badge: "badge-ubmn", desc: "BG1_BGB2 for LH side in station and bottom on HMI." },
-        { station: "080",  type: "UBMN", badge: "badge-ubmn", desc: "MM4-MB2 & MM3-MMB2 locations are swapped on HMI." },
-      ]
-    },
-    {
-      label: "Additional checks",
-      items: [
-        { station: "BSO/FRM2", type: "BSO/FRM2", badge: "badge-bsofrm2", desc: "Remove Wled/Stroke check and comments from non-process robots. Also check HMI." },
-        { station: "FRM2",     type: "FRM2",     badge: "badge-frm2",    desc: "Check drawer names, fixed states and transitions." },
-        { station: "BSO",      type: "BSO",      badge: "badge-bso",     desc: "Scada screen." },
-      ]
-    }
+  const ITEMS = [
+    { station: "050",  type: "DRNG", desc: "Several sensor positions on HMI vs. fixture do not match." },
+    { station: "010",  type: "DRNG", desc: "Cylinder labels were corrected but nomenclature discrepancy still exists. In HMI magnets are named GPA, but labels use MMB → must be MMB." },
+    { station: "010",  type: "UBMN", desc: "BG1-BGB9 is not in HMI." },
+    { station: "016",  type: "UBMN", desc: "BG1-BG1 & 2 are flipped." },
+    { station: "031R", type: "UBMN", desc: "Image on HMI doesn't match loading perspective." },
+    { station: "070",  type: "UBMN", desc: "Safety sensors labeled incorrectly on HMI. BG1_BGB1 on HMI for gun is labeled BGB8 on tool (RH side in station / top on HMI)." },
+    { station: "070",  type: "UBMN", desc: "BG1_BGB2 for LH side in station and bottom on HMI." },
+    { station: "080",  type: "UBMN", desc: "MM4-MB2 & MM3-MMB2 locations are swapped on HMI." },
   ];
-
-  const ALL_ITEMS = [];
-  SECTIONS.forEach(s => s.items.forEach(item => ALL_ITEMS.push(item)));
-  const TOTAL = ALL_ITEMS.length;
 
   // Build DOM
   const list = document.getElementById("items-list");
-  let globalIdx = 0;
-  SECTIONS.forEach(section => {
-    const label = document.createElement("div");
-    label.className = "section-label";
-    label.textContent = section.label;
-    list.appendChild(label);
-
-    section.items.forEach(item => {
-      const i = globalIdx++;
-      const div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `
-        <div class="item-top">
-          <span class="item-badge ${item.badge}">${item.station} · ${item.type}</span>
-          <span class="item-desc">${item.desc}</span>
+  ITEMS.forEach((item, i) => {
+    const div = document.createElement("div");
+    div.className = "item";
+    div.innerHTML = `
+      <div class="item-top">
+        <span class="item-badge ${item.type === 'DRNG' ? 'badge-drng' : 'badge-ubmn'}">${item.station} · ${item.type}</span>
+        <span class="item-desc">${item.desc}</span>
+      </div>
+      <div class="item-controls">
+        <select class="status-select" id="status-${i}">
+          <option value="pending">— Pendiente</option>
+          <option value="ok">✓ OK</option>
+          <option value="nok">✗ NOK</option>
+          <option value="review">↺ En revisión</option>
+        </select>
+        <input type="text" id="comment-${i}" placeholder="Comentario / responsable..." />
+        <input type="file" id="shot-${i}" accept="image/*" />
+      </div>
+      <div class="screenshot-preview" id="preview-${i}">
+        <img id="img-${i}" alt="Screenshot adjunto" />
+        <div class="screenshot-actions">
+          <a id="link-${i}" class="screenshot-link" href="#" target="_blank" rel="noopener noreferrer">Ver screenshot</a>
+          <button type="button" class="remove-shot" id="remove-${i}">Quitar screenshot</button>
         </div>
-        <div class="item-controls">
-          <select class="status-select" id="status-${i}">
-            <option value="pending">— Pendiente</option>
-            <option value="ok">✓ OK</option>
-            <option value="nok">✗ NOK</option>
-            <option value="review">↺ En revisión</option>
-          </select>
-          <input type="text" id="comment-${i}" placeholder="Comentario / responsable..." />
-        </div>
-      `;
-      list.appendChild(div);
-    });
+      </div>
+    `;
+    list.appendChild(div);
   });
 
-  // Name persistence
+  // Name
   const nameInput = document.getElementById("name-input");
-  nameInput.value = localStorage.getItem("checklist_name") || "";
-  nameInput.addEventListener("input", () => localStorage.setItem("checklist_name", nameInput.value));
+  const savedName = localStorage.getItem("checklist_name") || "";
+  nameInput.value = savedName;
+  nameInput.addEventListener("input", () => {
+    localStorage.setItem("checklist_name", nameInput.value);
+  });
 
-  // Saved flash
+  // Saved indicator
   let saveTimer;
   function flashSaved() {
     const el = document.getElementById("saved-indicator");
@@ -303,47 +318,106 @@
     saveTimer = setTimeout(() => el.classList.remove("show"), 2000);
   }
 
-  // Write to Firebase
-  function writeItem(i) {
+  function updateScreenshotPreview(i, screenshot) {
+    const wrap = document.getElementById(`preview-${i}`);
+    const img = document.getElementById(`img-${i}`);
+    const link = document.getElementById(`link-${i}`);
+
+    if (screenshot) {
+      wrap.classList.add("has-image");
+      img.src = screenshot;
+      link.href = screenshot;
+    } else {
+      wrap.classList.remove("has-image");
+      img.removeAttribute("src");
+      link.href = "#";
+    }
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function writeItem(i, screenshotOverride) {
     const status  = document.getElementById(`status-${i}`).value;
     const comment = document.getElementById(`comment-${i}`).value;
     const user    = nameInput.value.trim() || "Anónimo";
-    set(ref(db, `checklist/items/${i}`), { status, comment, user, ts: Date.now() });
+    const current = fbData[i] || {};
+    const payload = {
+      status,
+      comment,
+      user,
+      ts: Date.now()
+    };
+
+    const screenshot = screenshotOverride !== undefined ? screenshotOverride : (current.screenshot || "");
+    if (screenshot) {
+      payload.screenshot = screenshot;
+    }
+
+    await set(ref(db, `checklist/items/${i}`), payload);
     flashSaved();
   }
 
-  ALL_ITEMS.forEach((_, i) => {
+  let fbData = {};
+
+  // Attach listeners after DOM ready
+  ITEMS.forEach((_, i) => {
     document.getElementById(`status-${i}`).addEventListener("change", () => writeItem(i));
-    document.getElementById(`comment-${i}`).addEventListener("change",  () => writeItem(i));
+    document.getElementById(`comment-${i}`).addEventListener("change", () => writeItem(i));
+
+    document.getElementById(`shot-${i}`).addEventListener("change", async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const screenshot = await readFileAsDataUrl(file);
+      await writeItem(i, screenshot);
+      event.target.value = "";
+    });
+
+    document.getElementById(`remove-${i}`).addEventListener("click", async () => {
+      await writeItem(i, "");
+      updateScreenshotPreview(i, "");
+    });
   });
 
-  // Summary
+  // Update summary
   function updateSummary(data) {
     let ok=0, nok=0, review=0, pending=0;
-    ALL_ITEMS.forEach((_, i) => {
+    ITEMS.forEach((_, i) => {
       const s = data && data[i] ? data[i].status : "pending";
       if      (s === "ok")     ok++;
       else if (s === "nok")    nok++;
       else if (s === "review") review++;
       else                     pending++;
     });
-    const done = ok + nok + review;
-    document.getElementById("progress-bar").style.width = Math.round((done / TOTAL) * 100) + "%";
-    document.getElementById("progress-text").textContent = done + " de " + TOTAL + " revisados";
+    const done  = ok + nok + review;
+    const total = ITEMS.length;
+    document.getElementById("progress-bar").style.width = Math.round((done / total) * 100) + "%";
+    document.getElementById("progress-text").textContent = done + " de " + total + " revisados";
     document.getElementById("cnt-ok").textContent      = ok      + " OK";
     document.getElementById("cnt-nok").textContent     = nok     + " NOK";
     document.getElementById("cnt-review").textContent  = review  + " En revisión";
     document.getElementById("cnt-pending").textContent = pending + " Pendiente";
   }
 
-  // Realtime listener
-  onValue(ref(db, "checklist/items"), (snapshot) => {
+  // Listen realtime
+  const itemsRef = ref(db, "checklist/items");
+  onValue(itemsRef, (snapshot) => {
     document.getElementById("online-text").textContent = "Sincronizado en tiempo real";
     const data = snapshot.val() || {};
-    ALL_ITEMS.forEach((_, i) => {
-      const sel = document.getElementById(`status-${i}`);
-      const inp = document.getElementById(`comment-${i}`);
+    fbData = data;
+
+    ITEMS.forEach((_, i) => {
+      const sel  = document.getElementById(`status-${i}`);
+      const inp  = document.getElementById(`comment-${i}`);
       if (data[i]) {
+        // Only update if element not focused (avoid overwriting while typing)
         if (document.activeElement !== sel) {
           sel.value = data[i].status || "pending";
           sel.className = "status-select " + (data[i].status || "pending");
@@ -351,8 +425,19 @@
         if (document.activeElement !== inp) {
           inp.value = data[i].comment || "";
         }
+        updateScreenshotPreview(i, data[i].screenshot || "");
+      } else {
+        if (document.activeElement !== sel) {
+          sel.value = "pending";
+          sel.className = "status-select pending";
+        }
+        if (document.activeElement !== inp) {
+          inp.value = "";
+        }
+        updateScreenshotPreview(i, "");
       }
     });
+
     updateSummary(data);
   }, (error) => {
     document.getElementById("online-text").textContent = "Error de conexión — " + error.message;
