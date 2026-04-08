@@ -90,6 +90,9 @@
   }
   .badge-drng { background: #EEEDFE; color: #3C3489; }
   .badge-ubmn { background: #E1F5EE; color: #085041; }
+  .badge-frm2 { background: #FAEEDA; color: #633806; }
+  .badge-bso { background: #FAECE7; color: #712B13; }
+  .badge-mix { background: #E8E8E2; color: #444; }
 
   .item-desc { font-size: 13px; color: #222; line-height: 1.55; flex: 1; }
 
@@ -268,7 +271,26 @@
     { station: "070",  type: "UBMN", desc: "Safety sensors labeled incorrectly on HMI. BG1_BGB1 on HMI for gun is labeled BGB8 on tool (RH side in station / top on HMI)." },
     { station: "070",  type: "UBMN", desc: "BG1_BGB2 for LH side in station and bottom on HMI." },
     { station: "080",  type: "UBMN", desc: "MM4-MB2 & MM3-MMB2 locations are swapped on HMI." },
+    { station: "BSO/FRM2", type: "BSO/FRM2", desc: "Remove Weld/Stroke check and comments from non-process robots. Also check HMI." },
+    { station: "FRM2", type: "FRM2", desc: "Check drawer names, fixed states and transitions." },
+    { station: "BSO", type: "BSO", desc: "Scada screen." },
   ];
+
+  function getBadgeClass(type) {
+    switch (type) {
+      case "DRNG":
+        return "badge-drng";
+      case "FRM2":
+        return "badge-frm2";
+      case "BSO":
+        return "badge-bso";
+      case "BSO/FRM2":
+        return "badge-mix";
+      case "UBMN":
+      default:
+        return "badge-ubmn";
+    }
+  }
 
   // Build DOM
   const list = document.getElementById("items-list");
@@ -277,7 +299,7 @@
     div.className = "item";
     div.innerHTML = `
       <div class="item-top">
-        <span class="item-badge ${item.type === 'DRNG' ? 'badge-drng' : 'badge-ubmn'}">${item.station} · ${item.type}</span>
+        <span class="item-badge ${getBadgeClass(item.type)}">${item.station} · ${item.type}</span>
         <span class="item-desc">${item.desc}</span>
       </div>
       <div class="item-controls">
